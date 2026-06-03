@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reaksiya testi</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f0f0f;
+      color: #f0f0f0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    #app { width: 100%; max-width: 480px; }
+
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    /* LOGIN */
+    .login-wrap { text-align: center; padding: 2rem 0; }
+    .login-icon {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: #1a1a2e; border: 1px solid #333;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 1.5rem; font-size: 24px;
+    }
+    .login-wrap h1 { font-size: 24px; font-weight: 600; margin-bottom: 0.5rem; }
+    .login-wrap p { font-size: 14px; color: #888; margin-bottom: 1.5rem; }
+
+    input[type="text"] {
+      width: 100%; padding: 12px 14px;
+      background: #1a1a1a; border: 1px solid #333;
+      border-radius: 10px; color: #f0f0f0;
+      font-size: 15px; outline: none;
+      transition: border-color 0.2s;
+    }
+    input[type="text"]:focus { border-color: #555; }
+
+    .btn {
+      width: 100%; padding: 12px;
+      background: #f0f0f0; color: #0f0f0f;
+      border: none; border-radius: 10px;
+      font-size: 15px; font-weight: 600;
+      cursor: pointer; margin-top: 10px;
+      transition: opacity 0.15s;
+    }
+    .btn:hover { opacity: 0.9; }
+    .btn.secondary {
+      background: #1a1a1a; color: #f0f0f0;
+      border: 1px solid #333;
+    }
+    .btn.secondary:hover { background: #222; }
+
+    .error-msg {
+      font-size: 13px; color: #e05c5c;
+      margin-top: 8px; min-height: 20px;
+    }
+
+    /* GAME */
+    .user-row {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 1.25rem;
+    }
+    .avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: #1a1a2e; border: 1px solid #333;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 600; color: #7c83f7;
+      flex-shrink: 0;
+    }
+    .username-display { font-weight: 600; font-size: 15px; }
+    .logout-btn {
+      margin-left: auto; background: none; border: none;
+      color: #666; font-size: 13px; cursor: pointer; padding: 4px 8px;
+      border-radius: 6px;
+    }
+    .logout-btn:hover { color: #aaa; background: #1a1a1a; }
+
+    #target-area {
+      width: 100%; height: 200px;
+      border: 1px solid #2a2a2a;
+      border-radius: 14px;
+      background: #161616;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; margin: 1rem 0;
+      transition: background 0.1s, border-color 0.1s;
+      user-select: none;
+    }
+    #target-area.ready { background: #0d4f3c; border-color: #1D9E75; }
+    #target-area.too-early { background: #4f1f0d; border-color: #D85A30; }
+
+    #msg {
+      font-size: 18px; font-weight: 600;
+      color: #f0f0f0; pointer-events: none;
+      text-align: center; padding: 0 1rem;
+    }
+    #target-area.ready #msg { color: #5DCAA5; }
+    #target-area.too-early #msg { color: #F0997B; }
+
+    .stats {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 10px; margin: 1rem 0;
+    }
+    .stat {
+      background: #161616; border: 1px solid #2a2a2a;
+      border-radius: 10px; padding: 0.75rem 1rem;
+    }
+    .stat-label { font-size: 11px; color: #666; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-val { font-size: 20px; font-weight: 600; }
+
+    .history { display: flex; gap: 6px; flex-wrap: wrap; margin: 0.5rem 0 1rem; }
+    .badge {
+      font-size: 12px; padding: 3px 10px;
+      border-radius: 6px;
+      background: #1a1a1a; border: 1px solid #2a2a2a;
+      color: #888;
+    }
+    .badge.best { background: #0a2e20; color: #5DCAA5; border-color: #1D9E75; }
+
+    .action-row { display: flex; gap: 8px; margin-top: 0.5rem; }
+    .action-row .btn { margin-top: 0; }
+
+    /* LEADERBOARD */
+    .lb-header {
+      display: flex; justify-content: space-between;
+      align-items: center; margin-bottom: 1.25rem;
+    }
+    .lb-header h2 { font-size: 18px; font-weight: 600; }
+    .lb-card {
+      background: #161616; border: 1px solid #2a2a2a;
+      border-radius: 14px; padding: 0.75rem 1rem;
+      margin-bottom: 1rem;
+    }
+    .lb-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 0; border-bottom: 1px solid #1f1f1f;
+      font-size: 14px;
+    }
+    .lb-row:last-child { border-bottom: none; }
+    .lb-rank { width: 26px; font-weight: 600; color: #555; flex-shrink: 0; }
+    .lb-name { flex: 1; font-weight: 500; }
+    .lb-name.me { color: #5DCAA5; }
+    .lb-ms { color: #888; }
+    .lb-ms strong { color: #f0f0f0; font-weight: 600; }
+    .lb-date { font-size: 12px; color: #555; }
+    .top1 .lb-rank { color: #EF9F27; }
+    .top2 .lb-rank { color: #888; }
+    .top3 .lb-rank { color: #F0997B; }
+
+    .loading-msg { text-align: center; padding: 1.5rem; color: #555; font-size: 14px; }
+    .lb-note { font-size: 12px; color: #555; text-align: center; }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <div id="login-screen" class="screen active">
+    <div class="login-wrap">
+      <div class="login-icon">⚡</div>
+      <h1>Reaksiya testi</h1>
+      <p>Username yazıb daxil ol — qeydiyyat lazım deyil</p>
+      <input type="text" id="username-input" placeholder="Username..." maxlength="30" />
+      <div class="error-msg" id="login-error"></div>
+      <button class="btn" onclick="login()">Daxil ol</button>
+    </div>
+  </div>
+
+  <div id="game-screen" class="screen">
+    <div class="user-row">
+      <div class="avatar" id="avatar-initials">??</div>
+      <span class="username-display" id="username-display">—</span>
+      <button class="logout-btn" onclick="logout()">Çıx</button>
+    </div>
+
+    <div id="target-area" onclick="handleClick()">
+      <span id="msg">Başlamaq üçün bura bas</span>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="stat-label">Son nəticə</div><div class="stat-val" id="last">—</div></div>
+      <div class="stat"><div class="stat-label">Ən yaxşı</div><div class="stat-val" id="best">—</div></div>
+      <div class="stat"><div class="stat-label">Ortalama</div><div class="stat-val" id="avg">—</div></div>
+    </div>
+
+    <div class="history" id="history"></div>
+
+    <div class="action-row">
+      <button class="btn secondary" onclick="startGame()">Yenidən oyna</button>
+      <button class="btn" onclick="showLeaderboard()">Liderboard 🏆</button>
+    </div>
+  </div>
+
+  <div id="lb-screen" class="screen">
+    <div class="lb-header">
+      <h2>🏆 Liderboard</h2>
+      <button class="btn secondary" style="width:auto;padding:8px 16px;font-size:13px;" onclick="showGame()">Geri</button>
+    </div>
+    <div class="lb-card">
+      <div id="lb-content"><div class="loading-msg">Yüklənir...</div></div>
+    </div>
+    <p class="lb-note">Hər istifadəçinin ən yaxşı nəticəsi göstərilir</p>
+  </div>
+
+</div>
+
+<script>
+  const SUPA_URL = 'https://ozqxcfdcrsmkwqddajow.supabase.co';
+  const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im96cXhjZmRjcnNta3dxZGRham93Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0ODU5MTUsImV4cCI6MjA5NjA2MTkxNX0.zX3jlNtWkTatshwvLLR2FtHIrDtFnvQCAjPkvgthMos';
+
+  let currentUser = null;
+  let gameState = 'idle';
+  let gameTimer = null;
+  let startTime = null;
+  let results = [];
+
+  function supa(path, opts = {}) {
+    return fetch(SUPA_URL + '/rest/v1/' + path, {
+      headers: {
+        'apikey': SUPA_KEY,
+        'Authorization': 'Bearer ' + SUPA_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': opts.prefer || 'return=minimal',
+        ...opts.headers
+      },
+      method: opts.method || 'GET',
+      body: opts.body ? JSON.stringify(opts.body) : undefined
+    });
+  }
+
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  function login() {
+    const raw = document.getElementById('username-input').value;
+    const val = raw.trim();
+    const err = document.getElementById('login-error');
+    if (!val) { err.textContent = 'Username boş ola bilməz'; return; }
+    if (val.length < 2) { err.textContent = 'Minimum 2 hərf'; return; }
+    err.textContent = '';
+    currentUser = val;
+    const initials = val.replace(/\s+/g, ' ').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    document.getElementById('username-display').textContent = val;
+    document.getElementById('avatar-initials').textContent = initials;
+    results = [];
+    resetStats();
+    showScreen('game-screen');
+  }
+
+  function logout() {
+    currentUser = null;
+    results = [];
+    document.getElementById('username-input').value = '';
+    document.getElementById('history').innerHTML = '';
+    clearTimeout(gameTimer);
+    gameState = 'idle';
+    showScreen('login-screen');
+  }
+
+  function resetStats() {
+    document.getElementById('last').textContent = '—';
+    document.getElementById('best').textContent = '—';
+    document.getElementById('avg').textContent = '—';
+    document.getElementById('history').innerHTML = '';
+    const area = document.getElementById('target-area');
+    area.className = '';
+    document.getElementById('msg').textContent = 'Başlamaq üçün bura bas';
+  }
+
+  function handleClick() {
+    if (gameState === 'idle' || gameState === 'done') { startGame(); }
+    else if (gameState === 'waiting') { tooEarly(); }
+    else if (gameState === 'ready') { registerClick(); }
+  }
+
+  function startGame() {
+    clearTimeout(gameTimer);
+    gameState = 'waiting';
+    const area = document.getElementById('target-area');
+    area.className = '';
+    document.getElementById('msg').textContent = 'Hazırlaş... yaşıl olanda bas!';
+    const delay = 1500 + Math.random() * 3000;
+    gameTimer = setTimeout(showGreen, delay);
+  }
+
+  function showGreen() {
+    gameState = 'ready';
+    startTime = performance.now();
+    const area = document.getElementById('target-area');
+    area.className = 'ready';
+    document.getElementById('msg').textContent = 'İNDİ BAS!';
+  }
+
+  function tooEarly() {
+    clearTimeout(gameTimer);
+    gameState = 'idle';
+    const area = document.getElementById('target-area');
+    area.className = 'too-early';
+    document.getElementById('msg').textContent = 'Tez basdın! Yenidən cəhd et.';
+    setTimeout(() => {
+      area.className = '';
+      document.getElementById('msg').textContent = 'Başlamaq üçün bura bas';
+    }, 1500);
+  }
+
+  async function registerClick() {
+    const elapsed = Math.round(performance.now() - startTime);
+    gameState = 'done';
+    results.push(elapsed);
+    const best = Math.min(...results);
+    const avg = Math.round(results.reduce((a, b) => a + b, 0) / results.length);
+    document.getElementById('last').textContent = elapsed + ' ms';
+    document.getElementById('best').textContent = best + ' ms';
+    document.getElementById('avg').textContent = avg + ' ms';
+    const area = document.getElementById('target-area');
+    area.className = '';
+    document.getElementById('msg').textContent = elapsed + ' ms — Yenidən başlamaq üçün bas';
+    updateHistory(elapsed, best);
+    await saveScore(elapsed);
+  }
+
+  function updateHistory(val, best) {
+    const hist = document.getElementById('history');
+    const badge = document.createElement('span');
+    badge.className = 'badge' + (val === best && results.length > 1 ? ' best' : '');
+    badge.textContent = val + ' ms';
+    hist.prepend(badge);
+    if (hist.children.length > 8) hist.removeChild(hist.lastChild);
+  }
+
+  async function saveScore(ms) {
+    try {
+      await supa('scores', {
+        method: 'POST',
+        body: { username: currentUser, reaction_ms: ms },
+        prefer: 'return=minimal'
+      });
+    } catch (e) {
+      console.error('Save error:', e);
+    }
+  }
+
+  async function showLeaderboard() {
+    showScreen('lb-screen');
+    const content = document.getElementById('lb-content');
+    content.innerHTML = '<div class="loading-msg">Yüklənir...</div>';
+    try {
+      const res = await supa('scores?select=username,reaction_ms,created_at&order=reaction_ms.asc&limit=100');
+      const data = await res.json();
+      const bestPerUser = {};
+      for (const row of data) {
+        if (!bestPerUser[row.username] || row.reaction_ms < bestPerUser[row.username].reaction_ms) {
+          bestPerUser[row.username] = row;
+        }
+      }
+      const sorted = Object.values(bestPerUser).sort((a, b) => a.reaction_ms - b.reaction_ms).slice(0, 20);
+      if (sorted.length === 0) {
+        content.innerHTML = '<div class="loading-msg">Hələ heç bir nəticə yoxdur.</div>';
+        return;
+      }
+      content.innerHTML = sorted.map((row, i) => {
+        const rankClass = i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
+        const isMe = row.username === currentUser;
+        const medal = (i + 1) + '.';
+        const date = new Date(row.created_at).toLocaleDateString('az-AZ', { month: 'short', day: 'numeric' });
+        return `<div class="lb-row ${rankClass}">
+          <span class="lb-rank">${medal}</span>
+          <span class="lb-name ${isMe ? 'me' : ''}">${row.username}${isMe ? ' (sən)' : ''}</span>
+          <span class="lb-ms"><strong>${row.reaction_ms}</strong> ms</span>
+          <span class="lb-date">${date}</span>
+        </div>`;
+      }).join('');
+    } catch (e) {
+      content.innerHTML = '<div class="loading-msg" style="color:#e05c5c">Xəta baş verdi.</div>';
+    }
+  }
+
+  function showGame() { showScreen('game-screen'); }
+
+  document.getElementById('username-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') login();
+  });
+</script>
+</body>
+</html>
